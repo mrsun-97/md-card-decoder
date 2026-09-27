@@ -97,7 +97,7 @@ function commit(mutate, { keepSelection = false } = {}) {
 function addReveal(f, v, src) {
   const p = puzzle();
   // Real mode records what the game already showed, so a hint is accepted even at 0 (clamped).
-  const next = [...events(p), { reveal: { field: f, value: v } }];
+  const next = [...events(p), { reveal: { field: f, value: v, matched: src === 'matched' } }];
   const b = engines.belief({ events: next });
   if (!b.ok) return toast('这条线索与已有记录矛盾，没有加入。'), false;
   commit((st) => {
@@ -129,6 +129,29 @@ function nextPuzzle() {
     st.current += 1;
     // Test/mini-game: draw the new target and its initial reveal before rendering.
     if (session) startSessionPuzzle();
+  });
+}
+
+/** Jump to puzzle `n` (1-based), e.g. when starting to use the tool in the middle of the event. */
+function setPuzzle(n) {
+  const s = active();
+  const target = Math.max(1, Math.min(s.config.puzzles, Math.round(n))) - 1;
+  if (target === s.current) return;
+  if (target < s.current && !confirm(`回到第 ${target + 1} 题会删除之后各题的记录（可撤销），继续吗？`)) {
+    render();
+    return;
+  }
+  commit((st) => {
+    if (target > st.current) {
+      // Earlier puzzles count as solved; they have no recorded steps.
+      for (let i = 0; i <= st.current; i++) if (!st.puzzles[i].events.length) st.puzzles[i].solved = true;
+      st.puzzles[st.current].solved = true;
+      while (st.puzzles.length <= target) st.puzzles.push({ events: [], solved: st.puzzles.length < target, skipped: st.puzzles.length < target });
+    } else {
+      st.puzzles.length = target + 1;
+      st.puzzles[target].solved = false;
+    }
+    st.current = target;
   });
 }
 
@@ -184,7 +207,9 @@ function render() {
   document.documentElement.dataset.theme = state.settings.theme;
   belief = engines.belief({ events: events() });
   const eff = S.effectiveInventory(s);
-  $('#puzzleNumber').textContent = s.current + 1;
+  $('#puzzleInput').value = s.current + 1;
+  $('#puzzleInput').max = s.config.puzzles;
+  $('#puzzleInput').disabled = Boolean(session);
   $('#puzzleTotal').textContent = `/ ${s.config.puzzles}`;
   $('#hintStock').value = s.inventory.hints;
   $('#challengeStock').value = s.inventory.challenges;
@@ -218,7 +243,7 @@ function render() {
 
 function sourceOf(fieldIndex) {
   for (const e of puzzle().events) {
-    if (e.t === 'reveal' && e.f === fieldIndex) return e.src === 'initial' ? '初始揭示' : '提示揭示';
+    if (e.t === 'reveal' && e.f === fieldIndex) return { initial: '初始揭示', hint: '提示揭示', matched: '挑战相符（补录）' }[e.src] || '已知';
     if (e.t === 'challenge' && e.mask & (1 << fieldIndex)) return '挑战相符';
   }
   return null;
@@ -301,7 +326,7 @@ function renderPoints() {
   let total = 0;
   s.puzzles.forEach((p, i) => {
     const b = i === s.current ? belief : engines.belief({ events: events(p) });
-    total += S.puzzlePoints(s, i, b.ok ? popcount(b.matched) : 0, p.solved);
+    total += S.puzzlePoints(s, i, p.solved ? 6 : b.ok ? popcount(b.matched) : 0, p.solved);
   });
   $('#pointsTotal').textContent = total;
 }
@@ -318,7 +343,7 @@ function renderRevealControls() {
   const srcSel = $('#revealSource');
   srcSel.options[0].disabled = hasInitial;
   if (hasInitial && srcSel.value === 'initial') srcSel.value = 'hint';
-  if (!hasInitial) srcSel.value = 'initial';
+  if (!hasInitial && !puzzle().events.length) srcSel.value = 'initial';
   const off = !belief.ok || puzzle().solved || unknown.length === 0 || Boolean(session);
   $('#addRevealBtn').disabled = off;
   $('#randomHintBtn').disabled = !session || puzzle().solved || unknown.length === 0 || s.inventory.hints <= 0;
@@ -334,7 +359,11 @@ function populateRevealValues() {
     const ka = valueSortKey(f, a[0]); const kb = valueSortKey(f, b[0]);
     return typeof ka === 'number' ? ka - kb : String(ka).localeCompare(String(kb), 'zh-CN');
   });
+  // Keep the user's choice when the list is rebuilt (e.g. a re-render triggered by another input).
+  const prev = out.dataset.field === String(f) ? out.value : null;
   out.innerHTML = opts.map(([raw, mass]) => `<option value="${raw}">${escapeHtml(formatValue(f, raw))} · ${mass.toLocaleString('zh-CN')}张</option>`).join('');
+  out.dataset.field = String(f);
+  if (prev != null && opts.some(([raw]) => String(raw) === prev)) out.value = prev;
 }
 
 function isConsistent(g) {
@@ -512,6 +541,13 @@ function renderRecommendation(r) {
     if (!isConsistent(g)) notes.push('这张卡与已知条件不符：信息量更大，但需在游戏内重置卡片列表筛选才能选到。');
     if (r.ties.length > 1) notes.push(`另有 ${r.ties.length - 1} 个行动同样最优，任选其一。`);
     if (notes.length) { $('#recommendNote').textContent = notes.join(' '); $('#recommendNote').hidden = false; }
+  }
+  if (!session && s.inventory.challenges === 0) {
+    const note = $('#recommendNote');
+    const hintNow = r.action.type === 'hint' && s.inventory.hints > 0 ? '推荐的提示现在就可以使用；' : '';
+    note.textContent = `当前没有挑战次数：这是按之后还会发放的次数（计划总量）给出的建议。${hintNow}挑战请等下次发放（每天 13:00）后再进行。`
+      + (note.hidden ? '' : ` ${note.textContent}`);
+    note.hidden = false;
   }
   if (r.hintValue && r.bestChallengeValue && !(r.action.type === 'challenge' && best.pSolve > 1 - 1e-9)) {
     const d = r.hintValue[0] - r.bestChallengeValue[0];
@@ -807,13 +843,22 @@ function bind() {
     S.save(state);
     render();
   });
-  const editStock = (id, key) => $(id).addEventListener('change', () => commit((st) => { st.inventory[key] = Math.max(0, Number($(id).value) || 0); }, { keepSelection: true }));
+  const editStock = (id, key) => $(id).addEventListener('change', () => {
+    const v = Math.max(0, Number($(id).value) || 0);
+    if (v === active().inventory[key]) return; // a second change event on blur: nothing to do
+    commit((st) => { st.inventory[key] = v; }, { keepSelection: true });
+  });
   editStock('#hintStock', 'hints');
   editStock('#challengeStock', 'challenges');
-  $('#grantDays').addEventListener('change', () => commit((st) => {
-    st.grants.received = Math.max(1, Math.min(st.config.days, Number($('#grantDays').value) || 1));
-    st.grants.auto = false;
-  }, { keepSelection: true }));
+  $('#puzzleInput').addEventListener('change', () => setPuzzle(Number($('#puzzleInput').value) || 1));
+  $('#grantDays').addEventListener('change', () => {
+    const v = Math.max(1, Math.min(active().config.days, Number($('#grantDays').value) || 1));
+    if (v === active().grants.received) return;
+    commit((st) => {
+      st.grants.received = v;
+      st.grants.auto = false;
+    }, { keepSelection: true });
+  });
   $('#themeSelect').addEventListener('change', () => { state.settings.theme = $('#themeSelect').value; S.save(state); render(); });
   $('#testModeBtn').addEventListener('click', () => startSession('test'));
   $('#gameModeBtn').addEventListener('click', () => startSession('game'));

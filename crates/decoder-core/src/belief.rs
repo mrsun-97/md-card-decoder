@@ -13,6 +13,9 @@ pub enum Event {
     Reveal { field: Field, shown: u8 },
     /// A challenge with `guess` was judged `fb`.
     Challenge { guess: Gid, fb: Fb },
+    /// A field already matched by an earlier challenge that was not recorded (starting mid-event):
+    /// filters like a reveal and counts as a challenge match.
+    Matched { field: Field, shown: u8 },
 }
 
 /// Candidate set plus what is known about the target.
@@ -78,6 +81,19 @@ impl Belief {
                 }
                 self.cands = next;
                 self.known |= field.bit();
+                self.values[field as usize] = Some(shown);
+            }
+            Event::Matched { field, shown } => {
+                if self.values[field as usize].is_some_and(|v| v != shown) {
+                    return Err(Inconsistent);
+                }
+                let next: Vec<Gid> = self.cands.iter().copied().filter(|&g| t.shown(field, g) == shown).collect();
+                if next.is_empty() {
+                    return Err(Inconsistent);
+                }
+                self.cands = next;
+                self.known |= field.bit();
+                self.matched |= field.bit();
                 self.values[field as usize] = Some(shown);
             }
             Event::Challenge { guess, fb } => {
@@ -184,5 +200,14 @@ mod tests {
         assert_eq!(err.event, 1);
         let ranked = relax1(&ctx, &events);
         assert_eq!(ranked[0].0, 1, "dropping the wrong reveal explains the contradiction");
+    }
+
+    #[test]
+    fn matched_entry_filters_and_counts_as_match() {
+        let ctx = ctx();
+        let b = Belief::from_events(&ctx, &[Event::Matched { field: Field::Level, shown: 12 }]).unwrap();
+        assert!(b.cands.iter().all(|&g| ctx.table.shown(Field::Level, g) == 12));
+        assert_eq!(b.matched, Field::Level.bit());
+        assert_eq!(b.known, Field::Level.bit());
     }
 }

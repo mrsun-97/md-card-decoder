@@ -66,6 +66,50 @@ for (const [label, url] of [['http', `http://127.0.0.1:${port}/`], ['file', `fil
   check(errors.length === 0, `no page errors${errors.length ? ': ' + errors.join(' | ') : ''}`);
   await page.close();
 }
+{
+  // Starting mid-event (user's case): puzzle 4, 0 challenges, 3 hints, 4 grant days received;
+  // initial reveal DEF 0 and four fields already yellow in the game (game shows 41 candidates).
+  console.log('mid-event');
+  const ctx = await browser.newContext({ viewport: { width: 1400, height: 1000 } });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto(`http://127.0.0.1:${port}/`);
+  await page.waitForFunction(() => document.querySelector('#dataStats')?.textContent.includes('判定组'), null, { timeout: 30000 });
+  const setNum = async (sel, v) => { await page.fill(sel, String(v)); await page.dispatchEvent(sel, 'change'); };
+  await setNum('#puzzleInput', 4);
+  await setNum('#hintStock', 3);
+  await setNum('#challengeStock', 0);
+  await setNum('#grantDays', 4);
+  const add = async (field, value, source) => {
+    await page.selectOption('#revealField', String(field));
+    await page.selectOption('#revealValue', String(value));
+    await page.selectOption('#revealSource', source);
+    await page.click('#addRevealBtn');
+  };
+  await add(5, 0, 'initial');
+  await add(0, 2, 'matched');
+  await add(1, 32, 'matched');
+  await add(3, 1, 'matched');
+  await add(4, 0, 'matched');
+  // Our data: 12 groups / 62 cards (the game's list shows 41; the gap is exactly the 21-card
+  // group of 混沌死灵师 and its identical-field cards, see PLAN.md open questions).
+  const groups = await page.textContent('#candidateMass');
+  check(groups.startsWith('12 '), `candidates after the recorded fields (${groups}, ${await page.textContent('#candidateCount')} cards)`);
+  check((await page.inputValue('#puzzleInput')) === '4', 'puzzle number set to 4');
+  const planned = await page.textContent('#plannedStock');
+  check(planned.includes('提示 8') && planned.includes('挑战 20'), `planned inventory = now + 5 more grant days (${planned})`);
+  const matched = await page.textContent('#matchedSummary');
+  check(matched.includes('4 / 6'), `补录 fields count as matched, the initial reveal does not (${matched})`);
+  await page.waitForFunction(() => !document.querySelector('#proofLabel').hidden, null, { timeout: 30000 });
+  const note = await page.textContent('#recommendNote');
+  check(note.includes('当前没有挑战次数'), 'zero-challenge note explains the plan is for after the next grant');
+  const tabs = await page.$$eval('.trail-tab', (els) => els.map((e) => e.textContent.trim()));
+  check(tabs.length === 4 && tabs[0].includes('✓'), `trail shows Q1–Q3 as done and Q4 current (${tabs.join(' ')})`);
+  if (shots) await page.screenshot({ path: path.join(shots, 'mid-event.png'), fullPage: true });
+  check(errors.length === 0, `no page errors${errors.length ? ': ' + errors.join(' | ') : ''}`);
+  await ctx.close();
+}
 if (shots) {
   // Phone-width layout.
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });

@@ -39,14 +39,15 @@ export function renderTrail({ state, data, beliefs, tab, targets, hideTargets })
     const arrow = i > 0 ? '<div class="trail-arrow">▶</div>' : '';
     if (e.t === 'reveal') {
       const vals = []; vals[e.f] = e.v;
-      const tag = e.src === 'initial' ? '初始' : '提示';
-      return `${arrow}<div class="trail-step reveal"><div class="step-head"><div class="bulb" title="${tag}揭示">💡</div><em>${tag}</em></div><div class="trail-rows">${rows(vals, 0, 1 << e.f)}</div></div>`;
+      const tag = { initial: '初始', hint: '提示', matched: '补录' }[e.src] || '揭示';
+      const hit = e.src === 'matched' ? 1 << e.f : 0;
+      return `${arrow}<div class="trail-step reveal"><div class="step-head"><div class="bulb" title="${tag}">${e.src === 'matched' ? '✎' : '💡'}</div><em>${tag}</em></div><div class="trail-rows">${rows(vals, hit, 1 << e.f)}</div></div>`;
     }
     const g = data.gidOf(e.pc);
     const vals = FIELDS.map((_, f) => data.value(g, f));
     const extras = [e.rec ? '<span class="followed" title="按推荐挑战">★</span>' : '', e.n != null && e.mask !== 63 ? `<span>余 ${e.n}</span>` : ''].join('');
     return `${arrow}<div class="trail-step challenge${e.mask === 63 ? ' solved' : ''}"><div class="step-head">${e.mask === 63 ? '<div class="solved-badge">✓</div>' : ''}${thumbHtml(data, g, { zoom: true, small: true })}<em title="${escapeHtml(data.name(g))}">${escapeHtml(data.name(g))}</em></div><div class="trail-rows">${rows(vals, e.mask, 63)}</div><div class="step-extra">${extras}</div></div>`;
   }).join('');
-  const empty = p.events.length ? '' : '<div class="empty-inline">本题还没有记录。</div>';
+  const empty = p.events.length ? '' : `<div class="empty-inline">${p.skipped ? '这一题在开始使用本工具之前完成，没有记录。' : '本题还没有记录。'}</div>`;
   return `<div class="trail-tabs" role="tablist">${tabs}</div><div class="trail-body">${summary}<div class="trail-steps">${steps}${empty}</div></div>`;
 }

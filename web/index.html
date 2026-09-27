@@ -15,7 +15,7 @@
     <div class="brand"><div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div><div><h1>卡片解码者</h1><p>大师决斗求解器 · Rust/WASM</p></div></div>
     <div class="top-controls">
       <div class="event-stats" aria-label="活动状态">
-        <label>题目 <output id="puzzleNumber">1</output><span id="puzzleTotal">/ 9</span></label>
+        <label title="当前是第几题；中途开始使用时直接改成游戏里的题号">题目 <input id="puzzleInput" type="number" min="1" value="1" aria-label="当前题号"><span id="puzzleTotal">/ 9</span></label>
         <label title="游戏内当前可用的次数">提示 <input id="hintStock" type="number" min="0" value="3" aria-label="当前可用提示"></label>
         <label title="游戏内当前可用的次数">挑战 <input id="challengeStock" type="number" min="0" value="4" aria-label="当前可用挑战"></label>
         <label title="已领取几天的次数（首日登录，之后每天13:00发放）">已领取 <input id="grantDays" type="number" min="1" value="1" aria-label="已领取天数"><span id="grantTotal">/ 9 天</span></label>
@@ -48,8 +48,8 @@
       <div class="input-deck">
         <div class="input-tabs" role="tablist" aria-label="录入方式"><button class="tab is-active" type="button" data-tab="reveal" aria-selected="true">录入揭示</button><button class="tab" type="button" data-tab="challenge" aria-selected="false">记录挑战</button></div>
         <div class="tab-pane" id="revealPane">
-          <div class="input-row"><label><span>字段</span><select id="revealField"></select></label><label class="grow"><span>实际揭示值</span><select id="revealValue"></select></label><label><span>来源</span><select id="revealSource"><option value="initial">初始揭示</option><option value="hint">提示（消耗1次）</option></select></label><button class="quiet-btn" id="randomHintBtn" type="button">随机提示</button><button class="primary-btn" id="addRevealBtn" type="button">加入线索</button></div>
-          <p class="form-help">每题开始时游戏会免费揭示一项（初始揭示）；提示揭示的字段不计入相符奖励。</p>
+          <div class="input-row"><label><span>字段</span><select id="revealField"></select></label><label class="grow"><span>实际揭示值</span><select id="revealValue"></select></label><label><span>来源</span><select id="revealSource"><option value="initial">初始揭示</option><option value="hint">提示（消耗1次）</option><option value="matched">挑战相符（补录）</option></select></label><button class="quiet-btn" id="randomHintBtn" type="button">随机提示</button><button class="primary-btn" id="addRevealBtn" type="button">加入线索</button></div>
+          <p class="form-help">每题开始时游戏会免费揭示一项（初始揭示）；提示揭示的字段不计入相符奖励。中途开始使用时，游戏里已经变黄的字段可用“挑战相符（补录）”录入（最准确的做法仍是按游戏「记录」逐次录入挑战）。</p>
         </div>
         <div class="tab-pane" id="challengePane" hidden>
           <div class="search-block"><label class="grow"><span>本次挑战卡</span><input id="cardSearch" type="search" autocomplete="off" placeholder="输入中文、英文或日文卡名"></label><div class="search-results" id="searchResults" hidden></div></div>

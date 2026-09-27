@@ -144,7 +144,11 @@ impl Engine {
                 let shown = t
                     .shown_from_raw(field, raw)
                     .ok_or_else(|| err(format!("unknown value {raw} for field {fi}")))?;
-                out.push(Event::Reveal { field, shown });
+                out.push(if r["matched"].as_bool().unwrap_or(false) {
+                    Event::Matched { field, shown }
+                } else {
+                    Event::Reveal { field, shown }
+                });
             } else if let Some(c) = e.get("challenge") {
                 let guess = c["guess"].as_u64().ok_or_else(|| err("challenge.guess"))? as Gid;
                 if guess as usize >= t.len() {
