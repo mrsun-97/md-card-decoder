@@ -183,8 +183,8 @@ impl<'a> ExactSolver<'a> {
         self.visit(root, &all)
     }
 
-    /// Q-values of the root actions: HINT (if available) is always evaluated exactly; challenges
-    /// are exact unless proven worse than the best (then only an upper bound is reported).
+    /// Exact Q-values of all root actions (HINT first when available); branch-and-bound prunes
+    /// only below the root.
     pub fn root(&mut self, n: &Node) -> Result<Vec<RootQ>, OutOfBudget> {
         let root = self.lnode(n);
         let all: Vec<u16> = (0..self.actions.len() as u16).collect();
@@ -441,7 +441,10 @@ impl<'a> ExactSolver<'a> {
                 })
                 .collect();
             let guess = self.actions[*a as usize];
+            // At the root (when recording) every action is evaluated exactly, so the UI can show
+            // alternatives and the hint-vs-challenge difference; pruning still applies below.
             if !self.no_bounds
+                && record.is_none()
                 && let Some(b) = best
             {
                 let mut ub = Val::ZERO;

@@ -480,7 +480,15 @@ function renderRecommendation(r) {
     title.disabled = false;
     delete title.dataset.select;
     title.dataset.hint = '1';
-    $('#recommendReason').textContent = `提示会随机揭示一个未知字段。${explain}`;
+    const unknownFields = FIELDS.filter((_, i) => belief.known[i] == null);
+    let certain = `提示会从 ${unknownFields.length} 个未知字段中随机揭示一个。`;
+    if (unknownFields.length === 1) {
+      const fi = FIELDS.indexOf(unknownFields[0]);
+      const distinct = engines.revealOptions({ events: events() }, fi).length;
+      certain = `只剩「${unknownFields[0].label}」未知，提示必定揭示它，`
+        + (distinct === belief.count ? `足以从 ${belief.count} 个候选中确定目标卡，之后一次挑战即可解出。` : `能把 ${belief.count} 个候选分成 ${distinct} 种情况。`);
+    }
+    $('#recommendReason').textContent = `${certain}${explain}`;
     $('#metricSolve').textContent = '—';
   } else {
     const g = r.action.gid;

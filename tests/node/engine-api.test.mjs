@@ -78,3 +78,21 @@ test('simulateBatch runs in wasm', { skip: !ready && 'build first' }, async () =
   assert.equal(out.solvedHist.reduce((a, b) => a + b, 0), 3);
   console.log(`  3 simulated events in wasm: ${(performance.now() - t0).toFixed(0)} ms, histogram ${out.solvedHist.join(',')}`);
 });
+
+test('user report: 3 candidates differing only in ATK — hint vs challenges are all evaluated', { skip: !ready && 'build first' }, async () => {
+  const e = await engine();
+  // Q6 of the user's mini-game: initial reveal DEF 2000, then 非军事区龙 and 电子恶魔.
+  const target = 7825; // 秒杀之暗杀者 (group id in data/generated order)
+  const events = [{ reveal: { field: 5, value: 2000 } }];
+  for (const g of [7924, 589]) {
+    const j = JSON.parse(e.judge(g, target));
+    events.push({ challenge: { guess: g, mask: j.mask, frame: j.frame, level: j.level } });
+  }
+  const b = JSON.parse(e.belief(JSON.stringify({ events })));
+  assert.deepEqual([...b.candidates].sort((x, y) => x - y), [1702, 2924, 7825]);
+  const r = JSON.parse(e.recommend(JSON.stringify({ events, hints: 6, challenges: 14, remainingAfter: 3 })));
+  assert.equal(r.method, 'exact-in-puzzle');
+  assert.ok(r.hintValue && r.bestChallengeValue, 'both the hint and the best challenge have exact values');
+  assert.ok(r.actions.filter((a) => a.type === 'challenge').length >= 2, 'card alternatives are listed');
+  console.log(`  Q6: ${r.action.type}, hint ${r.hintValue.map((x) => x.toFixed(4))} vs challenge ${r.bestChallengeValue.map((x) => x.toFixed(4))}`);
+});
