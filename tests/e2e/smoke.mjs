@@ -78,33 +78,41 @@ for (const [label, url] of [['http', `http://127.0.0.1:${port}/`], ['file', `fil
   await page.waitForFunction(() => document.querySelector('#dataStats')?.textContent.includes('判定组'), null, { timeout: 30000 });
   const setNum = async (sel, v) => { await page.fill(sel, String(v)); await page.dispatchEvent(sel, 'change'); };
   await setNum('#puzzleInput', 4);
+  // Re-enter the game's 「记录」 for this puzzle: initial reveal DEF 0, then one challenge.
+  await page.selectOption('#revealField', '5');
+  await page.selectOption('#revealValue', '0');
+  await page.selectOption('#revealSource', 'initial');
+  await page.click('#addRevealBtn');
+  await page.click('.tab[data-tab="challenge"]');
+  await page.fill('#cardSearch', '混沌死灵师');
+  await page.waitForSelector('#searchResults button[data-select]');
+  await page.click('#searchResults button[data-select]');
+  await page.click('#challengeBtn');
+  for (const bit of [1, 2, 8, 16, 32]) await page.click(`.feedback-toggle[data-bit="${bit}"]`); // all but 种族
+  await page.click('#confirmFeedbackBtn');
+  // Then set the counts to the game's current state.
   await setNum('#hintStock', 3);
   await setNum('#challengeStock', 0);
   await setNum('#grantDays', 4);
-  const add = async (field, value, source) => {
-    await page.selectOption('#revealField', String(field));
-    await page.selectOption('#revealValue', String(value));
-    await page.selectOption('#revealSource', source);
-    await page.click('#addRevealBtn');
-  };
-  await add(5, 0, 'initial');
-  await add(0, 2, 'matched');
-  await add(1, 32, 'matched');
-  await add(3, 1, 'matched');
-  await add(4, 0, 'matched');
-  // An earlier challenge with a Fiend card did not match on race: exclude 恶魔族 (8).
-  await add(2, 8, 'excluded');
-  const groups = await page.textContent('#candidateMass');
   const cards = (await page.textContent('#candidateCount')).trim();
-  check(cards === '41', `candidate count matches the game's 41/9058 after excluding 恶魔族 (${groups}, ${cards} cards)`);
+  check(cards === '41', `re-entered 记录 gives the game's 41/9058 (${cards} cards, ${await page.textContent('#candidateMass')})`);
   check((await page.inputValue('#puzzleInput')) === '4', 'puzzle number set to 4');
   const planned = await page.textContent('#plannedStock');
   check(planned.includes('提示 8') && planned.includes('挑战 20'), `planned inventory = now + 5 more grant days (${planned})`);
   const matched = await page.textContent('#matchedSummary');
-  check(matched.includes('4 / 6'), `补录 fields count as matched, the initial reveal does not (${matched})`);
-  await page.waitForFunction(() => !document.querySelector('#proofLabel').hidden, null, { timeout: 30000 });
+  check(matched.includes('5 / 6'), `challenge matches counted, incl. DEF matched after the initial reveal (${matched})`);
+  const waitRec = () => page.waitForFunction(() => !document.querySelector('#proofLabel').hidden, null, { timeout: 30000 });
+  await waitRec();
+  check((await page.textContent('#recommendTitle')).includes('提示'), `with hints available: ${await page.textContent('#recommendTitle')}`);
   const note = await page.textContent('#recommendNote');
   check(note.includes('当前没有挑战次数'), 'zero-challenge note explains the plan is for after the next grant');
+  // Editing the counts re-computes the strategy: no hints now and no more grants → a card.
+  await setNum('#hintStock', 0);
+  await setNum('#challengeStock', 5);
+  await setNum('#grantDays', 9);
+  await waitRec();
+  const after = await page.textContent('#recommendTitle');
+  check(!after.includes('提示'), `after editing hints to 0 (no more grants) it recommends a card: ${after}`);
   const tabs = await page.$$eval('.trail-tab', (els) => els.map((e) => e.textContent.trim()));
   check(tabs.length === 4 && tabs[0].includes('✓'), `trail shows Q1–Q3 as done and Q4 current (${tabs.join(' ')})`);
   if (shots) await page.screenshot({ path: path.join(shots, 'mid-event.png'), fullPage: true });

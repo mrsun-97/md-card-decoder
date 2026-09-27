@@ -48,8 +48,8 @@
       <div class="input-deck">
         <div class="input-tabs" role="tablist" aria-label="录入方式"><button class="tab is-active" type="button" data-tab="reveal" aria-selected="true">录入揭示</button><button class="tab" type="button" data-tab="challenge" aria-selected="false">记录挑战</button></div>
         <div class="tab-pane" id="revealPane">
-          <div class="input-row"><label><span>字段</span><select id="revealField"></select></label><label class="grow"><span>实际揭示值</span><select id="revealValue"></select></label><label><span>来源</span><select id="revealSource"><option value="initial">初始揭示</option><option value="hint">提示（消耗1次）</option><option value="matched">挑战相符（补录）</option><option value="excluded">挑战不符（补录）</option></select></label><button class="quiet-btn" id="randomHintBtn" type="button">随机提示</button><button class="primary-btn" id="addRevealBtn" type="button">加入线索</button></div>
-          <p class="form-help">每题开始时游戏会免费揭示一项（初始揭示）；提示揭示的字段不计入相符奖励。中途开始使用时，游戏里已经变黄的字段用“挑战相符（补录）”录入；之前挑战中没有相符而排除掉的值（例如种族≠恶魔族）用“挑战不符（补录）”录入。最准确的做法仍是按游戏「记录」逐次录入挑战。</p>
+          <div class="input-row"><label><span>字段</span><select id="revealField"></select></label><label class="grow"><span>实际揭示值</span><select id="revealValue"></select></label><label><span>来源</span><select id="revealSource"><option value="initial">初始揭示</option><option value="hint">提示（消耗1次）</option></select></label><button class="quiet-btn" id="randomHintBtn" type="button">随机提示</button><button class="primary-btn" id="addRevealBtn" type="button">加入线索</button></div>
+          <p class="form-help">每题开始时游戏会免费揭示一项（初始揭示）；提示揭示的字段不计入相符奖励。中途开始使用时，按游戏「记录」依次录入本题的初始揭示、提示和每次挑战，最后把顶栏的提示／挑战次数改成游戏里的剩余次数。</p>
         </div>
         <div class="tab-pane" id="challengePane" hidden>
           <div class="search-block"><label class="grow"><span>本次挑战卡</span><input id="cardSearch" type="search" autocomplete="off" placeholder="输入中文、英文或日文卡名"></label><div class="search-results" id="searchResults" hidden></div></div>

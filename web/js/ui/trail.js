@@ -39,13 +39,8 @@ export function renderTrail({ state, data, beliefs, tab, targets, hideTargets })
     const arrow = i > 0 ? '<div class="trail-arrow">▶</div>' : '';
     if (e.t === 'reveal') {
       const vals = []; vals[e.f] = e.v;
-      const tag = { initial: '初始', hint: '提示', matched: '补录·相符', excluded: '补录·不符' }[e.src] || '揭示';
-      const hit = e.src === 'matched' ? 1 << e.f : 0;
-      const icon = e.src === 'matched' || e.src === 'excluded' ? '✎' : '💡';
-      const body = e.src === 'excluded'
-        ? rows(vals, 0, 1 << e.f).replace('<b>', '<b class="excluded">≠ ')
-        : rows(vals, hit, 1 << e.f);
-      return `${arrow}<div class="trail-step reveal"><div class="step-head"><div class="bulb" title="${tag}">${icon}</div><em>${tag}</em></div><div class="trail-rows">${body}</div></div>`;
+      const tag = e.src === 'initial' ? '初始' : '提示';
+      return `${arrow}<div class="trail-step reveal"><div class="step-head"><div class="bulb" title="${tag}揭示">💡</div><em>${tag}</em></div><div class="trail-rows">${rows(vals, 0, 1 << e.f)}</div></div>`;
     }
     const g = data.gidOf(e.pc);
     const vals = FIELDS.map((_, f) => data.value(g, f));

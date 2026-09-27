@@ -112,7 +112,7 @@ export function puzzlePoints(state, index, matchedCount, solved) {
 /** Engine state for a puzzle: events with group ids. `gidOf(passcode)` maps passcodes. */
 export function engineEvents(puzzle, gidOf) {
   return puzzle.events.map((e) => (e.t === 'reveal'
-    ? { reveal: { field: e.f, value: e.v, matched: e.src === 'matched', excluded: e.src === 'excluded' } }
+    ? { reveal: { field: e.f, value: e.v } }
     : { challenge: { guess: gidOf(e.pc), mask: e.mask, frame: e.frame ?? null, level: e.level ?? null } }));
 }
 
@@ -125,6 +125,11 @@ export function load(dataHash) {
         s.config = normalizeConfig(s.config);
         s.settings = { pool: 'md', unknownStatMatches: true, linkDefMatches: true, consistentOnly: false, theme: 'dark', ...s.settings };
         s.grants = s.grants || { received: 1, startDate: null };
+        // The short-lived 补录 entry types were removed: matched fields become plain reveals,
+        // excluded values are dropped.
+        for (const p of s.puzzles || []) {
+          p.events = (p.events || []).filter((e) => e.src !== 'excluded').map((e) => (e.src === 'matched' ? { ...e, src: 'hint' } : e));
+        }
         return s;
       }
     }

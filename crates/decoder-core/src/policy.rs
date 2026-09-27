@@ -182,7 +182,8 @@ impl Planner {
             {
                 let q: Vec<(Action, Val)> =
                     roots.iter().filter_map(|r| r.value.map(|v| (r.action, v))).collect();
-                let tol = if method == Method::ExactFinal { [crate::value::EPS; 3] } else { cfg.root_tolerance };
+                let tol =
+                    if method == Method::ExactFinal { [crate::value::EPS; 3] } else { cfg.root_tolerance };
                 if let Some(d) = pick(q, method, ex.root_actions(), tol) {
                     return Some(d);
                 }

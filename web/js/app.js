@@ -97,7 +97,7 @@ function commit(mutate, { keepSelection = false } = {}) {
 function addReveal(f, v, src) {
   const p = puzzle();
   // Real mode records what the game already showed, so a hint is accepted even at 0 (clamped).
-  const next = [...events(p), { reveal: { field: f, value: v, matched: src === 'matched', excluded: src === 'excluded' } }];
+  const next = [...events(p), { reveal: { field: f, value: v } }];
   const b = engines.belief({ events: next });
   if (!b.ok) return toast('这条线索与已有记录矛盾，没有加入。'), false;
   commit((st) => {
@@ -243,7 +243,7 @@ function render() {
 
 function sourceOf(fieldIndex) {
   for (const e of puzzle().events) {
-    if (e.t === 'reveal' && e.f === fieldIndex && e.src !== 'excluded') return { initial: '初始揭示', hint: '提示揭示', matched: '挑战相符（补录）' }[e.src] || '已知';
+    if (e.t === 'reveal' && e.f === fieldIndex) return e.src === 'initial' ? '初始揭示' : '提示揭示';
     if (e.t === 'challenge' && e.mask & (1 << fieldIndex)) return '挑战相符';
   }
   return null;
@@ -256,7 +256,7 @@ function renderContradiction() {
   const describe = (i) => {
     const e = evs[i];
     if (!e) return `第 ${i + 1} 条`;
-    return e.t === 'reveal' ? `第 ${i + 1} 条：${FIELDS[e.f].short} ${e.src === 'excluded' ? '≠' : '='} ${formatValue(e.f, e.v)}` : `第 ${i + 1} 条：挑战 ${escapeHtml(data.name(data.gidOf(e.pc)))} 的判定`;
+    return e.t === 'reveal' ? `第 ${i + 1} 条：${FIELDS[e.f].short} = ${formatValue(e.f, e.v)}` : `第 ${i + 1} 条：挑战 ${escapeHtml(data.name(data.gidOf(e.pc)))} 的判定`;
   };
   const sug = belief.contradiction.suggestions.map(([i]) => `<button class="quiet-btn" type="button" data-drop-event="${i}">删除${describe(i)}</button>`).join('');
   box.innerHTML = `<strong>记录互相矛盾：没有任何卡片符合全部线索。</strong><p>最可能录错的是：</p><div class="contradiction-actions">${sug || '（无法定位，请撤销最近的录入）'}</div>`;
