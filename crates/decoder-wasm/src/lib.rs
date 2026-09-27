@@ -144,7 +144,9 @@ impl Engine {
                 let shown = t
                     .shown_from_raw(field, raw)
                     .ok_or_else(|| err(format!("unknown value {raw} for field {fi}")))?;
-                out.push(if r["matched"].as_bool().unwrap_or(false) {
+                out.push(if r["excluded"].as_bool().unwrap_or(false) {
+                    Event::Excluded { field, shown }
+                } else if r["matched"].as_bool().unwrap_or(false) {
                     Event::Matched { field, shown }
                 } else {
                     Event::Reveal { field, shown }

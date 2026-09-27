@@ -112,7 +112,7 @@ export function puzzlePoints(state, index, matchedCount, solved) {
 /** Engine state for a puzzle: events with group ids. `gidOf(passcode)` maps passcodes. */
 export function engineEvents(puzzle, gidOf) {
   return puzzle.events.map((e) => (e.t === 'reveal'
-    ? { reveal: { field: e.f, value: e.v, matched: e.src === 'matched' } }
+    ? { reveal: { field: e.f, value: e.v, matched: e.src === 'matched', excluded: e.src === 'excluded' } }
     : { challenge: { guess: gidOf(e.pc), mask: e.mask, frame: e.frame ?? null, level: e.level ?? null } }));
 }
 

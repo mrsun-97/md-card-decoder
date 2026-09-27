@@ -92,10 +92,11 @@ for (const [label, url] of [['http', `http://127.0.0.1:${port}/`], ['file', `fil
   await add(1, 32, 'matched');
   await add(3, 1, 'matched');
   await add(4, 0, 'matched');
-  // Our data: 12 groups / 62 cards (the game's list shows 41; the gap is exactly the 21-card
-  // group of 混沌死灵师 and its identical-field cards, see PLAN.md open questions).
+  // An earlier challenge with a Fiend card did not match on race: exclude 恶魔族 (8).
+  await add(2, 8, 'excluded');
   const groups = await page.textContent('#candidateMass');
-  check(groups.startsWith('12 '), `candidates after the recorded fields (${groups}, ${await page.textContent('#candidateCount')} cards)`);
+  const cards = (await page.textContent('#candidateCount')).trim();
+  check(cards === '41', `candidate count matches the game's 41/9058 after excluding 恶魔族 (${groups}, ${cards} cards)`);
   check((await page.inputValue('#puzzleInput')) === '4', 'puzzle number set to 4');
   const planned = await page.textContent('#plannedStock');
   check(planned.includes('提示 8') && planned.includes('挑战 20'), `planned inventory = now + 5 more grant days (${planned})`);
