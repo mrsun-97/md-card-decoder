@@ -45,6 +45,11 @@ pub struct PolicyCfg {
     pub exact_nonfinal_max_n: usize,
     /// Only consider guesses consistent with the known fields (optional UI setting).
     pub consistent_only: bool,
+    /// Practical tolerance per objective component when choosing among root actions: options
+    /// within `tol[0]` expected puzzles count as equal on that component and the choice falls
+    /// through to matches, then fewer actions. Search estimates are far coarser than 1e-3, so
+    /// strict comparison would pick on noise. Not used for the exact last-puzzle tier.
+    pub root_tolerance: [f64; 3],
 }
 
 impl PolicyCfg {
@@ -60,6 +65,7 @@ impl PolicyCfg {
             exact_max_n: 0,
             exact_nonfinal_max_n: 0,
             consistent_only: false,
+            root_tolerance: [crate::value::EPS; 3],
         }
     }
 
@@ -77,6 +83,7 @@ impl PolicyCfg {
             exact_budget: 30_000,
             exact_max_n: 16,
             exact_nonfinal_max_n: 7,
+            root_tolerance: [1e-4, 1e-3, crate::value::EPS],
             ..PolicyCfg::legacy()
         }
     }
@@ -175,7 +182,8 @@ impl Planner {
             {
                 let q: Vec<(Action, Val)> =
                     roots.iter().filter_map(|r| r.value.map(|v| (r.action, v))).collect();
-                if let Some(d) = pick(q, method, ex.root_actions()) {
+                let tol = if method == Method::ExactFinal { [crate::value::EPS; 3] } else { cfg.root_tolerance };
+                if let Some(d) = pick(q, method, ex.root_actions(), tol) {
                     return Some(d);
                 }
             }
@@ -192,7 +200,7 @@ impl Planner {
         };
         let mut hz = Horizon::new(ctx, cont, leaf, actions);
         let q = hz.root(&node, cfg.depth);
-        pick(q, Method::Horizon { depth: cfg.depth }, root_actions)
+        pick(q, Method::Horizon { depth: cfg.depth }, root_actions, cfg.root_tolerance)
     }
 
     fn universe(&self, ctx: &Ctx, b: &Belief, cfg: &PolicyCfg) -> Vec<Gid> {
@@ -254,16 +262,20 @@ fn binary_entropy(p: f64) -> f64 {
 }
 
 /// Best action (first maximum in evaluation order), with the Q list sorted best first.
-fn pick(mut q: Vec<(Action, Val)>, method: Method, root_actions: usize) -> Option<Decision> {
-    let mut best: Option<(Action, Val)> = None;
-    for &(a, v) in &q {
-        if best.is_none_or(|(_, b)| v.gt(&b)) {
-            best = Some((a, v));
-        }
+fn pick(mut q: Vec<(Action, Val)>, method: Method, root_actions: usize, tol: [f64; 3]) -> Option<Decision> {
+    if q.is_empty() {
+        return None;
     }
-    let (action, value) = best?;
-    // Display order: exact lexicographic total order (the tolerance comparison is not transitive
-    // and must never be used as a sort comparator).
-    q.sort_by(|a, b| b.1.total_cmp(&a.1));
+    // Lexicographic choice with a tolerance per component: keep the options within tol[i] of the
+    // best on component i, then move to the next component. First in evaluation order wins ties.
+    let mut pool: Vec<usize> = (0..q.len()).collect();
+    for (i, &t) in tol.iter().enumerate() {
+        let best = pool.iter().map(|&k| q[k].1.0[i]).fold(f64::NEG_INFINITY, f64::max);
+        pool.retain(|&k| q[k].1.0[i] >= best - t);
+    }
+    let (action, value) = q[pool[0]];
+    // Display order: chosen action first, then an exact lexicographic total order (the tolerance
+    // comparison is not transitive and must never be used as a sort comparator).
+    q.sort_by(|a, b| (b.0 == action).cmp(&(a.0 == action)).then(b.1.total_cmp(&a.1)));
     Some(Decision { action, value, method, q, root_actions })
 }

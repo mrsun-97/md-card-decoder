@@ -531,12 +531,12 @@ function renderRecommendation(r) {
   const sureSolve = r.action.type === 'challenge' && best.pSolve > 1 - 1e-9;
   const alts = sureSolve ? [] : r.actions.slice(1).filter(useful).slice(0, 5);
   const bestTotal = solvedBefore + r.value[0];
-  $('#alternatives').innerHTML = alts.length ? `<div class="alt-head"><strong>其他选择</strong><span>右侧：选它之后，预计本活动共解出几题（推荐行动为 ${bestTotal.toFixed(3)} 题）</span></div>` + alts.map((a) => {
+  $('#alternatives').innerHTML = alts.length ? `<div class="alt-head"><strong>其他选择</strong><span>右侧：选它之后，预计本活动共解出几题（推荐行动为 ${bestTotal.toFixed(3)} 题）。预计解题数相差不到 0.0001 题的选择视为同样好，此时依次比较相符项和本题预计行动次数。</span></div>` + alts.map((a) => {
     const name = a.type === 'hint' ? '使用提示' : escapeHtml(data.name(a.gid));
     const attr = a.type === 'hint' ? '' : `data-select="${a.gid}"`;
     const stats = a.type === 'hint'
       ? '随机揭示一个未知字段'
-      : `直接猜中 ${pct(a.pSolve)} · 平均新增相符 ${a.eNewMatches.toFixed(2)} 项 · 信息量 ${a.entropy.toFixed(2)} bit`;
+      : `直接猜中 ${pct(a.pSolve)} · 平均新增相符 ${a.eNewMatches.toFixed(2)} 项 · 信息量 ${a.entropy.toFixed(2)} bit · 本题预计行动 ${(-a.value[2]).toFixed(2)} 次`;
     const total = solvedBefore + a.value[0];
     return `<button type="button" class="alt-row" ${attr} title="选择后预计本活动共解出 ${total.toFixed(4)} 题"><strong>${name}</strong><span>${stats}</span><em>${total.toFixed(3)}<small>题</small></em></button>`;
   }).join('') : '';

@@ -54,6 +54,7 @@ fn policy(name: &str) -> Result<PolicyCfg, String> {
         "F" => PolicyCfg::fitted_zero_leaf(),
         "FV" => PolicyCfg::fv2(),
         "FV-noexact" => PolicyCfg { exact: false, ..PolicyCfg::fv2() },
+        "FV-strict" => PolicyCfg { root_tolerance: [decoder_core::value::EPS; 3], ..PolicyCfg::fv2() },
         "FV3" => PolicyCfg { depth: 3, ..PolicyCfg::fv2() },
         "FVK16" => PolicyCfg { extra_entropy: 16, ..PolicyCfg::fv2() },
         "FVK32" => PolicyCfg { extra_entropy: 32, ..PolicyCfg::fv2() },
