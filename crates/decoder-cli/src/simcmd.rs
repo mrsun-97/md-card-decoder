@@ -132,6 +132,25 @@ pub fn sim(bin: &Path, args: &[&str]) -> Res {
     let t0 = Instant::now();
     let r = run_many(&ctx, &models, &cfg, event, seed, n);
     let s = summarize(&r, event.puzzles);
+    // Leftover resources: in failed events, unused hints would mean hints were hoarded.
+    let failed: Vec<&ActivityOutcome> = r.iter().filter(|x| x.solved < event.puzzles).collect();
+    let left = |xs: &[&ActivityOutcome]| -> (f64, f64) {
+        let n = xs.len().max(1) as f64;
+        (
+            xs.iter().map(|x| (event.hints as u32 - x.hints_used) as f64).sum::<f64>() / n,
+            xs.iter().map(|x| (event.challenges as u32 - x.challenges_used) as f64).sum::<f64>() / n,
+        )
+    };
+    let ok: Vec<&ActivityOutcome> = r.iter().filter(|x| x.solved == event.puzzles).collect();
+    let (fh, fc) = left(&failed);
+    let (oh, oc) = left(&ok);
+    let hist: Vec<usize> = (0..=event.hints).map(|h| failed.iter().filter(|x| event.hints as u32 - x.hints_used == h as u32).count()).collect();
+    println!(
+        "  finished all: {} events, left hints {oh:.2}, challenges {oc:.2} | failed: {} events, left hints {fh:.2}, challenges {fc:.2}; failed events by hints left {:?}",
+        ok.len(),
+        failed.len(),
+        hist
+    );
     println!(
         "{} {}/{}/{} n={n}: E[solved] {:.4} ± {:.4}, P(all) {:.2}% [{:.2}, {:.2}], hints {:.2}, challenges {:.2} ({:.1} s)",
         opt(&o, "policy", "FV".to_string())?,
