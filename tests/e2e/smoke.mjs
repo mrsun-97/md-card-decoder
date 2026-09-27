@@ -55,6 +55,14 @@ for (const [label, url] of [['http', `http://127.0.0.1:${port}/`], ['file', `fil
   check(steps >= 2, `活动轨迹 shows ${steps} steps`);
   check(await page.isVisible('#solvedBanner'), 'test-mode puzzle solved by following recommendations');
   if (shots && label === 'http') await page.screenshot({ path: path.join(shots, 'test-mode.png'), fullPage: true });
+  // Next puzzle: the new initial reveal must be shown at once and the trail must follow to Q2.
+  await page.click('#nextPuzzleBtn');
+  const known = await page.$$eval('.field-card.is-known', (els) => els.length);
+  check(known === 1, `next puzzle shows its initial reveal (${known} known field)`);
+  const tab = await page.textContent('.trail-tab.is-active');
+  check(tab.trim().startsWith('Q2'), `活动轨迹 switches to the new puzzle (${tab.trim()})`);
+  const nextCount = Number((await page.textContent('#candidateCount')).replace(/,/g, ''));
+  check(nextCount > 0 && nextCount < 9059, `candidate count reflects the initial reveal (${nextCount})`);
   check(errors.length === 0, `no page errors${errors.length ? ': ' + errors.join(' | ') : ''}`);
   await page.close();
 }

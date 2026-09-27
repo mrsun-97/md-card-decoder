@@ -21,6 +21,7 @@ let recToken = 0;
 let selected = null; // selected guess gid
 let candidateLimit = 100;
 let trailTab = null;
+let trailCurrent = null;
 let toastTimer = null;
 
 const active = () => (session ? session.state : state);
@@ -126,8 +127,9 @@ function nextPuzzle() {
   commit((st) => {
     st.puzzles.push({ events: [], solved: false });
     st.current += 1;
+    // Test/mini-game: draw the new target and its initial reveal before rendering.
+    if (session) startSessionPuzzle();
   });
-  if (session) startSessionPuzzle();
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -391,7 +393,9 @@ function refreshCandidateFilterValues() {
 
 function renderTrailPanel() {
   const s = active();
-  if (trailTab == null || trailTab > s.current) trailTab = s.current;
+  // Follow the current puzzle whenever it changes; otherwise keep the tab the user picked.
+  if (trailTab == null || trailTab > s.current || trailCurrent !== s.current) trailTab = s.current;
+  trailCurrent = s.current;
   const beliefs = s.puzzles.map((p, i) => (i === s.current ? belief : engines.belief({ events: events(p) })));
   $('#trail').innerHTML = renderTrail({ state: s, data, beliefs, tab: trailTab, targets: session?.targets, hideTargets: session?.mode === 'game' && !session.revealed });
   const n = s.puzzles.reduce((acc, p) => acc + p.events.length, 0);
