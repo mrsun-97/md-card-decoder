@@ -495,7 +495,7 @@ html[data-theme="light"] .search-result:focus { background: rgba(37,99,235,.07);
 .trail-tab.is-active { color: #0b1a05; background: #b6e33a; }
 .trail-body { display: flex; gap: 10px; }
 .trail-summary { position: sticky; left: 0; flex: 0 0 132px; display: grid; gap: 8px; align-content: start; padding-right: 10px; border-right: 1px solid var(--line); }
-.trail-steps { display: flex; align-items: flex-start; gap: 6px; overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: 8px; }
+.trail-steps { flex: 1 1 0%; display: flex; align-items: flex-start; gap: 6px; overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: 8px; }
 .trail-step { flex: 0 0 104px; display: grid; gap: 6px; padding: 8px; border-radius: 10px; background: rgba(30,48,72,.55); scroll-snap-align: end; }
 .trail-step.solved { box-shadow: inset 0 0 0 2px var(--gold); }
 .step-head { position: relative; display: grid; justify-items: center; gap: 4px; min-height: 150px; align-content: center; }
@@ -565,3 +565,8 @@ body:has(.solved-banner:not([hidden])) { padding-bottom: 110px; }
   .test-banner { grid-template-columns: 1fr; }
   .test-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 }
+
+.alt-head { display: grid; gap: 2px; margin: 4px 2px 2px; }
+.alt-head strong { font-size: .86rem; }
+.alt-head span { color: var(--muted); font-size: .72rem; line-height: 1.5; }
+.alt-row em small { margin-left: 2px; color: var(--muted); font-size: .7rem; font-weight: 600; }

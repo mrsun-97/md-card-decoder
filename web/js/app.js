@@ -500,20 +500,26 @@ function renderRecommendation(r) {
   if (r.hintValue && r.bestChallengeValue) {
     const d = r.hintValue[0] - r.bestChallengeValue[0];
     const box = $('#hintCompare');
-    box.textContent = Math.abs(d) < 1e-6
-      ? '提示与最佳挑战的预期解题数相同，按次要目标（相符项、行动数）选择。'
-      : d > 0 ? `先用提示：预期多解 ${d.toFixed(3)} 题。` : `直接挑战：比先用提示预期多解 ${(-d).toFixed(3)} 题。`;
+    const fmt = (x) => (x >= 0.01 ? x.toFixed(2) : x.toFixed(3));
+    box.textContent = Math.abs(d) < 0.0005
+      ? '先用提示和直接挑战的预期解题数几乎相同（相差不到 0.001 题），按相符项和行动次数选择。'
+      : d > 0 ? `先用提示：比直接挑战预期多解 ${fmt(d)} 题。` : `直接挑战：比先用提示预期多解 ${fmt(-d)} 题。`;
     box.hidden = false;
   }
   if (r.forecast) {
     $('#methodNote').textContent = `本题预计还需约 ${r.forecast.eChallenges.toFixed(1)} 次挑战、${r.forecast.eHints.toFixed(1)} 次提示（模拟估计）。候选 ${r.count} 组，熵 ${r.entropy.toFixed(2)} bit。`;
   }
-  $('#alternatives').innerHTML = r.actions.slice(1).map((a) => {
+  const alts = r.actions.slice(1);
+  const bestTotal = solvedBefore + r.value[0];
+  $('#alternatives').innerHTML = alts.length ? `<div class="alt-head"><strong>其他选择</strong><span>右侧：选它之后，预计本活动共解出几题（推荐行动为 ${bestTotal.toFixed(3)} 题）</span></div>` + alts.map((a) => {
     const name = a.type === 'hint' ? '使用提示' : escapeHtml(data.name(a.gid));
     const attr = a.type === 'hint' ? '' : `data-select="${a.gid}"`;
-    const stats = a.type === 'hint' ? '随机揭示一项' : `猜中 ${pct(a.pSolve)} · 相符 ${a.eNewMatches.toFixed(2)} · ${a.entropy.toFixed(2)} bit`;
-    return `<button type="button" class="alt-row" ${attr}><strong>${name}</strong><span>${stats}</span><em>${(solvedBefore + a.value[0]).toFixed(3)}</em></button>`;
-  }).join('');
+    const stats = a.type === 'hint'
+      ? '随机揭示一个未知字段'
+      : `直接猜中 ${pct(a.pSolve)} · 平均新增相符 ${a.eNewMatches.toFixed(2)} 项 · 信息量 ${a.entropy.toFixed(2)} bit`;
+    const total = solvedBefore + a.value[0];
+    return `<button type="button" class="alt-row" ${attr} title="选择后预计本活动共解出 ${total.toFixed(4)} 题"><strong>${name}</strong><span>${stats}</span><em>${total.toFixed(3)}<small>题</small></em></button>`;
+  }).join('') : '';
 }
 
 // ---------------------------------------------------------------------------------------------
