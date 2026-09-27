@@ -257,7 +257,7 @@ impl Engine {
             challenges: clamp("challenges"),
             remaining_after: clamp("remainingAfter"),
         };
-        let Some(r) = recommend(&self.ctx, &self.models, &mut self.planner, &self.cfg, input, 5) else {
+        let Some(r) = recommend(&self.ctx, &self.models, &mut self.planner, &self.cfg, input, 12) else {
             return Ok(json!({ "ok": true, "action": null }).to_string());
         };
         let (method, depth) = match r.decision.method {

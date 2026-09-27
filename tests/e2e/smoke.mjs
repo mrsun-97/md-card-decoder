@@ -42,6 +42,10 @@ for (const [label, url] of [['http', `http://127.0.0.1:${port}/`], ['file', `fil
     const solved = await page.isVisible('#solvedBanner');
     if (solved) break;
     await page.waitForFunction(() => !document.querySelector('#proofLabel').hidden || !document.querySelector('#solvedBanner').hidden, null, { timeout: 30000 });
+    if ((await page.textContent('#candidateMass')).startsWith('1 ')) {
+      const alts = await page.$$eval('.alt-row', (els) => els.length);
+      check(alts === 0, `no wasted alternatives when one candidate is left (${alts} shown)`);
+    }
     const isHint = await page.$eval('#recommendTitle', (el) => Boolean(el.dataset.hint));
     await page.click('#recommendTitle');
     if (!isHint) await page.click('#challengeBtn');

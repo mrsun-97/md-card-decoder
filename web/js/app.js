@@ -499,13 +499,17 @@ function renderRecommendation(r) {
     $('#recommendThumb').innerHTML = thumbHtml(data, g, { zoom: true });
     $('#recommendThumb').hidden = false;
     $('#metricSolve').textContent = pct(best.pSolve);
-    $('#recommendReason').textContent = `${explain} 本次直接猜中 ${pct(best.pSolve)}，平均新增相符 ${best.eNewMatches.toFixed(2)} 项，信息量 ${best.entropy.toFixed(2)} bit（${best.outcomes} 种反馈）。`;
+    if (best.pSolve > 1 - 1e-9) {
+      $('#recommendReason').textContent = belief.count === 1
+        ? '只剩这一种可能：直接挑战这张卡即可解出本题，不需要再用提示或尝试其他卡。'
+        : '剩下的候选都会被这张卡判定为六项全中：直接挑战即可解出本题。';
+    } else $('#recommendReason').textContent = `${explain} 本次直接猜中 ${pct(best.pSolve)}，平均新增相符 ${best.eNewMatches.toFixed(2)} 项，信息量 ${best.entropy.toFixed(2)} bit（${best.outcomes} 种反馈）。`;
     const notes = [];
     if (!isConsistent(g)) notes.push('这张卡与已知条件不符：信息量更大，但需在游戏内重置卡片列表筛选才能选到。');
     if (r.ties.length > 1) notes.push(`另有 ${r.ties.length - 1} 个行动同样最优，任选其一。`);
     if (notes.length) { $('#recommendNote').textContent = notes.join(' '); $('#recommendNote').hidden = false; }
   }
-  if (r.hintValue && r.bestChallengeValue) {
+  if (r.hintValue && r.bestChallengeValue && !(r.action.type === 'challenge' && best.pSolve > 1 - 1e-9)) {
     const d = r.hintValue[0] - r.bestChallengeValue[0];
     const box = $('#hintCompare');
     const fmt = (x) => (x >= 0.01 ? x.toFixed(2) : x.toFixed(3));
@@ -517,7 +521,11 @@ function renderRecommendation(r) {
   if (r.forecast) {
     $('#methodNote').textContent = `本题预计还需约 ${r.forecast.eChallenges.toFixed(1)} 次挑战、${r.forecast.eHints.toFixed(1)} 次提示（模拟估计）。候选 ${r.count} 组，熵 ${r.entropy.toFixed(2)} bit。`;
   }
-  const alts = r.actions.slice(1);
+  // Hide options that are pure waste: no chance to solve now and no information (e.g. when a single
+  // candidate is left), and the hint when it cannot tell anything apart.
+  const useful = (a) => (a.type === 'hint' ? belief.count > 1 : a.pSolve > 1e-9 || a.entropy > 1e-9);
+  const sureSolve = r.action.type === 'challenge' && best.pSolve > 1 - 1e-9;
+  const alts = sureSolve ? [] : r.actions.slice(1).filter(useful).slice(0, 5);
   const bestTotal = solvedBefore + r.value[0];
   $('#alternatives').innerHTML = alts.length ? `<div class="alt-head"><strong>其他选择</strong><span>右侧：选它之后，预计本活动共解出几题（推荐行动为 ${bestTotal.toFixed(3)} 题）</span></div>` + alts.map((a) => {
     const name = a.type === 'hint' ? '使用提示' : escapeHtml(data.name(a.gid));
