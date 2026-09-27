@@ -22,6 +22,7 @@ let selected = null; // selected guess gid
 let candidateLimit = 100;
 let trailTab = null;
 let trailCurrent = null;
+let priorEntropy = null;
 let toastTimer = null;
 
 const active = () => (session ? session.state : state);
@@ -79,6 +80,7 @@ function loadAliasesLater() {
 }
 
 function applyPolicy() {
+  priorEntropy = null;
   const s = state.settings;
   return engines.setPolicy({ pool: s.pool, unknownStatMatches: s.unknownStatMatches, linkDefMatches: s.linkDefMatches, consistentOnly: s.consistentOnly });
 }
@@ -427,7 +429,16 @@ function renderTrailPanel() {
   if (trailTab == null || trailTab > s.current || trailCurrent !== s.current) trailTab = s.current;
   trailCurrent = s.current;
   const beliefs = s.puzzles.map((p, i) => (i === s.current ? belief : engines.belief({ events: events(p) })));
-  $('#trail').innerHTML = renderTrail({ state: s, data, beliefs, tab: trailTab, targets: session?.targets, hideTargets: session?.mode === 'game' && !session.revealed });
+  // Posterior entropy before the first step and after each step of the shown puzzle, so every
+  // column can show how much uncertainty it removed.
+  const shownEvents = events(s.puzzles[trailTab]);
+  const entropies = [];
+  for (let k = 0; k <= shownEvents.length; k++) {
+    const b = k === 0 && priorEntropy != null ? { ok: true, entropy: priorEntropy } : engines.belief({ events: shownEvents.slice(0, k) });
+    if (k === 0 && b.ok) priorEntropy = b.entropy;
+    entropies.push(b.ok ? b.entropy : null);
+  }
+  $('#trail').innerHTML = renderTrail({ state: s, data, beliefs, tab: trailTab, entropies, targets: session?.targets, hideTargets: session?.mode === 'game' && !session.revealed });
   const n = s.puzzles.reduce((acc, p) => acc + p.events.length, 0);
   $('#trailCount').textContent = `${s.puzzles.length} 题 · ${n} 步`;
   const scroller = $('#trail .trail-steps');

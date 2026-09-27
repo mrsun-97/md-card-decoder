@@ -53,6 +53,8 @@ for (const [label, url] of [['http', `http://127.0.0.1:${port}/`], ['file', `fil
   }
   const steps = await page.$$eval('.trail-step', (els) => els.length);
   check(steps >= 2, `活动轨迹 shows ${steps} steps`);
+  const bits = await page.$$eval('.trail-step .bits', (els) => els.map((e) => Number(e.textContent.replace(/[^\d.]/g, ''))));
+  check(bits.length === steps && bits.every((b) => b >= 0), `every step shows the bits of uncertainty it removed (${bits.map((b) => b.toFixed(2)).join(', ')})`);
   check(await page.isVisible('#solvedBanner'), 'test-mode puzzle solved by following recommendations');
   if (shots && label === 'http') await page.screenshot({ path: path.join(shots, 'test-mode.png'), fullPage: true });
   // Next puzzle: the new initial reveal must be shown at once and the trail must follow to Q2.
