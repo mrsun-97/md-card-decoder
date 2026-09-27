@@ -1,0 +1,73 @@
+# Rule fixtures from official examples and real play (PLAN.md §3.2, §9).
+# Cards are given by passcode; `matched` lists the fields the game highlighted ("all" = solved).
+# Field names: frame, attribute, race, level, atk, def. Reveal values are raw (frame bits, rule level).
+
+# --- Official 「卡片边框」 examples -------------------------------------------------------------
+[[judge]]
+name = "边框范例1: target 霸王龙扎克 (Fusion/Pendulum), guess 幻之召唤神 艾克佐迪亚 (Fusion)"
+target = 13331639
+guess = 83257450
+matched = ["frame", "attribute"]
+frame_reveal = 132
+
+[[judge]]
+name = "边框范例2: target 霸王龙扎克, guess 清透翼疾速龙 (Synchro/Pendulum)"
+target = 13331639
+guess = 90036274
+matched = ["frame", "race"]
+frame_reveal = 132
+
+[[judge]]
+name = "边框范例3: target 幻之召唤神 艾克佐迪亚 (Fusion), guess 霸王龙扎克 (Fusion/Pendulum)"
+target = 83257450
+guess = 13331639
+matched = ["frame", "attribute"]
+frame_reveal = 4
+
+# --- Official 「等级/阶级/连结」 examples -----------------------------------------------------
+[[judge]]
+name = "等级范例1: target 究极玛雅・卓尔金, guess 翼日编号0 未来皇霍普 (printed 0 matches)"
+target = 1686814
+guess = 65305468
+matched = ["level", "atk", "def"]
+level_reveal = 12
+
+[[judge]]
+name = "等级范例2: target 究极玛雅・卓尔金, guess 绝望神 安提霍普 (rule level 12)"
+target = 1686814
+guess = 52085072
+matched = ["attribute", "level"]
+level_reveal = 12
+
+[[judge]]
+name = "等级范例3: target 绝望神 安提霍普, guess 究极玛雅・卓尔金"
+target = 52085072
+guess = 1686814
+matched = ["attribute", "level"]
+level_reveal = 12
+
+# --- Real play (user's in-game 「记录」 screenshots, 2026-09-26) ----------------------------------
+[[replay]]
+name = "Q1 魔界剧团－美丽女主演"
+target = 24907044
+steps = [
+  { reveal = "atk", value = 1500, source = "initial" },
+  { guess = 74064212, matched = ["frame", "level", "atk"] },                      # 太阳电池人
+  { reveal = "attribute", value = 32, source = "hint" },
+  { guess = 49684352, matched = ["frame", "attribute", "level", "atk", "def"] },  # 娱乐伙伴 天空的魔术师
+  { guess = 24907044, matched = "all" },
+]
+
+[[replay]]
+name = "Q3 焰征龙－爆破"
+target = 53804307
+steps = [
+  { reveal = "frame", value = 2, source = "initial" },
+  { guess = 72992744, matched = ["frame"] },                                      # 小丑阁下
+  { guess = 78922939, matched = ["frame"] },                                      # 废品侍从
+  { guess = 94689635, matched = ["frame"] },                                      # 紫光之宣告者
+  { reveal = "race", value = 8192, source = "hint" },
+  { guess = 88453933, matched = ["frame", "race"] },                              # 龙女仆・侍应龙女
+  { guess = 67675300, matched = ["frame", "race", "atk", "def"] },                # 雪尘龙
+  { guess = 53804307, matched = "all" },
+]

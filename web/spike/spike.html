@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><title>engine spike</title></head>
+<body>
+<pre id="out">running…</pre>
+<script src="engine/files.js"></script>
+<script src="engine/engine-client.js"></script>
+<script>
+(async () => {
+  const out = document.getElementById('out');
+  const log = (s) => { out.textContent += '\n' + s; };
+  try {
+    const w = await EngineClient.EngineWorker.create();
+    const cards = await EngineClient.loadCards();
+    // Candidates: MD groups whose frame id is the most common one (≈ "effect").
+    const n = new DataView(cards.buffer).getUint32(8, true);
+    const cands = Array.from({ length: 5000 }, (_, i) => i);
+    const r = await w.request({ type: 'bench', cands });
+    window.__result = { ok: true, protocol: location.protocol, groups: n, ms: r.ms, cells: r.cells };
+    log(JSON.stringify(window.__result));
+    w.terminate();
+  } catch (e) {
+    window.__result = { ok: false, protocol: location.protocol, error: String(e && e.message || e) };
+    log('ERROR ' + window.__result.error);
+  }
+})();
+</script>
+</body>
+</html>

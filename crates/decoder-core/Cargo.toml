@@ -1,0 +1,11 @@
+[package]
+name = "decoder-core"
+description = "Card Decoder engine: card data, game rules, belief tracking, search and simulation"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+libm = "0.2"
+rustc-hash = "2"

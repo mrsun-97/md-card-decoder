@@ -1,0 +1,17 @@
+{
+  "note": "Pinned upstream sources for `mdcd data build`. Update with: node tools/data-fetch.mjs --update",
+  "fetchedAt": "2026-09-27",
+  "ygocdb": {
+    "url": "https://ygocdb.com/api/v0/cards.zip",
+    "cardsJsonMd5": "4ccbfbdd77bca4d9762bb0efeae6ea3e"
+  },
+  "ygomaster": {
+    "repo": "pixeltris/YgoMaster",
+    "commit": "0e2078237d46c2450f3a18697b8a756df256b8e9"
+  },
+  "files": {
+    "ygocdb-cards.json": "621a06d2d5bbacaee26608860419fae2de3b1c69d64ce2300f4ece2bc17d5756",
+    "CardList.json": "08b044880600bfc6c302d2095e3f6709dc12846e7f1b23424a0af4648bf8a6e2",
+    "YdkIds.txt": "9d8ccb58152d180ad4e752c5ec3435b4ccde2862072ad0911c725903830f5f98"
+  }
+}

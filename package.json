@@ -1,0 +1,25 @@
+{
+  "name": "md-card-decoder",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "卡片解码者：Rust/WASM 求解器 + 静态网页（把 public/ 上传到 Cloudflare Workers）",
+  "scripts": {
+    "doctor": "node tools/doctor.mjs",
+    "data:fetch": "node tools/data-fetch.mjs",
+    "data:build": "cargo run --release -q -p decoder-cli -- data build data/raw build/data && cp build/data/summary.json data/summary.json",
+    "data:update": "node tools/data-fetch.mjs --update && npm run -s data:build",
+    "data:check": "cargo run --release -q -p decoder-cli -- data compare-legacy dist/cards-data.js build/data/cards.bin && cargo run --release -q -p decoder-cli -- check-rules dist/cards-data.js build/data/cards.bin",
+    "build:wasm": "node tools/build-wasm.mjs",
+    "build:site": "node tools/build-site.mjs",
+    "build": "node tools/build-wasm.mjs && node tools/build-site.mjs",
+    "bench": "cargo run --release -q -p decoder-cli -- bench build/data/cards.bin",
+    "bench:wasm": "node tools/bench-wasm.mjs",
+    "spike:browser": "node tools/spike-browser.mjs",
+    "test": "cargo test --workspace && node --test tests/node/"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "playwright": "^1.63.0"
+  }
+}

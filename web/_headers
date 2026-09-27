@@ -1,0 +1,19 @@
+# Cloudflare Workers 静态资源响应头（此文件本身不会被当成页面发出去）。
+# 若控制台上传不支持本文件，站点照常可用：默认 max-age=0 + ETag，重新上传立即生效。
+
+# 文件名带内容哈希：内容一变文件名就变，可以放心缓存一年
+/engine/*
+  Cache-Control: public, max-age=31536000, immutable
+/data/*
+  Cache-Control: public, max-age=31536000, immutable
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+/cards/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# 不需要 COOP/COEP：没有使用 WASM 多线程。
+# 若以后加 CSP，WASM 编译需要 'wasm-unsafe-eval'，Blob Worker 需要 blob:

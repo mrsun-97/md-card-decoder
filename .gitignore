@@ -5,3 +5,12 @@ dist/card-images-zh/
 *.zip
 .DS_Store
 Thumbs.db
+
+# Rust / build outputs
+/target/
+/.tools/
+/build/
+/public/
+/data/raw/
+/node_modules/
+/.wrangler/
