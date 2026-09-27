@@ -1,0 +1,69 @@
+# 构建与测试；产物是可直接上传到 Cloudflare 控制台的网站压缩包（不需要 Cloudflare 凭据）。
+name: ci
+
+on:
+  push:
+    branches: [main, rust-rewrite]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+
+      # wasm-bindgen CLI 必须与 Cargo.lock 里的 crate 版本完全一致
+      - name: wasm-bindgen version
+        id: wbg
+        run: echo "version=$(grep -A1 'name = "wasm-bindgen"' Cargo.lock | grep version | head -1 | cut -d'"' -f2)" >> "$GITHUB_OUTPUT"
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-bindgen@${{ steps.wbg.outputs.version }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      - name: Rust checks
+        run: |
+          cargo fmt --all --check
+          cargo clippy --workspace --all-targets -- -D warnings
+          cargo test --workspace
+
+      # 缩略图只下载一次：按卡库哈希缓存
+      - uses: actions/cache@v4
+        with:
+          path: build/thumbs
+          key: thumbs-${{ hashFiles('data/generated/cards.bin') }}
+          restore-keys: thumbs-
+      - run: npm run images
+
+      - run: npm run build
+      - run: node --test tests/node/
+
+      - name: End-to-end test (headless Chromium)
+        run: |
+          npx playwright install --with-deps chromium-headless-shell
+          npm run test:e2e
+
+      - run: node tools/pack.mjs
+      - uses: actions/upload-artifact@v7
+        with:
+          name: md-card-decoder-site
+          path: build/md-card-decoder-site.zip
+
+      - name: Release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v3
+        with:
+          files: build/md-card-decoder-site.zip

@@ -1,4 +1,4 @@
-//! Bootstrap conversion of the legacy `dist/cards-data.js` into `cards.bin` + name files.
+//! Bootstrap conversion of the legacy `legacy/cards-data.js` into `cards.bin` + name files.
 //! The reproducible upstream pipeline (ygocdb + YgoMaster) replaces this in M2.
 
 use std::collections::HashSet;
@@ -112,7 +112,7 @@ pub fn convert(src: &Path, out: &Path) -> Result<(), Box<dyn std::error::Error>>
     }
     let meta = json!({
         "dataHash": format!("{:016x}", table.data_hash),
-        "source": "legacy dist/cards-data.js",
+        "source": "legacy legacy/cards-data.js",
         "legacyGeneratedAt": data["generatedAt"],
         "labels": data["labels"],
         "groups": table.len(),

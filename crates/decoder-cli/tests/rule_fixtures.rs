@@ -1,5 +1,5 @@
 //! Official rule examples and real-play logs (tests/golden/rules.toml) against the built card table.
-//! Needs `npm run data:build` (build/data/cards.bin); skipped otherwise.
+//! Needs `npm run data:build` (data/generated/cards.bin); skipped otherwise.
 
 use std::path::PathBuf;
 
@@ -75,7 +75,7 @@ fn mask(m: &Matched) -> u8 {
 
 fn load() -> Option<(CardTable, Fixtures)> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
-    let bin = std::fs::read(root.join("build/data/cards.bin")).ok()?;
+    let bin = std::fs::read(root.join("data/generated/cards.bin")).ok()?;
     let fixtures =
         toml::from_str(&std::fs::read_to_string(root.join("tests/golden/rules.toml")).unwrap()).unwrap();
     Some((CardTable::from_bytes(&bin).unwrap(), fixtures))
@@ -84,7 +84,7 @@ fn load() -> Option<(CardTable, Fixtures)> {
 #[test]
 fn official_examples_and_real_play() {
     let Some((t, fx)) = load() else {
-        eprintln!("skipped: build/data/cards.bin missing (run npm run data:build)");
+        eprintln!("skipped: data/generated/cards.bin missing (run npm run data:build)");
         return;
     };
     let rules = Rules::new(&t, RulePolicy::default());

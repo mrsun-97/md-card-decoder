@@ -6,11 +6,11 @@ import { root } from './lib.mjs';
 
 const { initSync, Engine } = await import(path.join(root, 'build', 'wasm', 'decoder.js'));
 initSync({ module: fs.readFileSync(path.join(root, 'build', 'wasm', 'decoder_bg.wasm')) });
-const engine = new Engine(fs.readFileSync(path.join(root, "build", "data", "cards.bin")), new Uint8Array());
+const engine = new Engine(fs.readFileSync(path.join(root, "data", "generated", "cards.bin")), new Uint8Array());
 console.log(`groups ${engine.groups}, MD ${engine.mdGroups}, data hash ${engine.dataHash}`);
 
 // Same states as `mdcd bench`: candidates sharing one shown value, rebuilt from cards.bin columns.
-const bin = fs.readFileSync(path.join(root, 'build', 'data', 'cards.bin'));
+const bin = fs.readFileSync(path.join(root, 'data', 'generated', 'cards.bin'));
 const cols = readColumns(bin);
 const md = [...Array(cols.nMd).keys()];
 const states = [

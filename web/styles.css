@@ -553,5 +553,15 @@ html[data-theme="light"] .cand-head { background: rgba(236,242,248,.97); }
   .sim-stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
 }
 
-/* The solved banner sits in the flow above the lower panel instead of floating over its buttons. */
-.solved-banner { position: sticky; bottom: 16px; z-index: 5; width: min(1540px, calc(100% - 40px)); margin: -40px auto 24px; }
+/* The solved banner: a compact bar at the bottom centre; the page gets room so nothing hides behind it. */
+.solved-banner { position: fixed; left: 50%; right: auto; bottom: 16px; z-index: 20; width: max-content; max-width: calc(100% - 32px); margin: 0; transform: translateX(-50%); }
+body:has(.solved-banner:not([hidden])) { padding-bottom: 110px; }
+
+/* Grid and flex children may shrink below their content width (long names, wide tables scroll inside). */
+.workspace > *, .test-banner > *, .target-summary > *, .selected-card > .grow, .trail-body, .trail-steps { min-width: 0; }
+.target-summary strong, .target-summary p, .target-summary span { overflow-wrap: anywhere; }
+.candidate-table-wrap { min-width: 0; overflow-x: auto; }
+@media (max-width: 700px) {
+  .test-banner { grid-template-columns: 1fr; }
+  .test-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+}

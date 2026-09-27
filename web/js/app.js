@@ -311,7 +311,7 @@ function renderRevealControls() {
   const sel = $('#revealField');
   const prev = sel.value;
   sel.innerHTML = unknown.map((i) => `<option value="${i}">${FIELDS[i].label}</option>`).join('');
-  if (unknown.includes(Number(prev))) sel.value = prev;
+  if (prev !== '' && unknown.includes(Number(prev))) sel.value = prev;
   const hasInitial = puzzle().events.some((e) => e.t === 'reveal' && e.src === 'initial');
   const srcSel = $('#revealSource');
   srcSel.options[0].disabled = hasInitial;

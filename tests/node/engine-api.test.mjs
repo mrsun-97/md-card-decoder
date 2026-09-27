@@ -6,7 +6,7 @@ import test from 'node:test';
 
 const root = path.resolve(import.meta.dirname, '..', '..');
 const wasmDir = path.join(root, 'build', 'wasm');
-const cardsBin = path.join(root, 'build', 'data', 'cards.bin');
+const cardsBin = path.join(root, 'data', 'generated', 'cards.bin');
 const tablesBin = path.join(root, 'tables', 'tables.bin');
 const ready = [path.join(wasmDir, 'decoder.js'), cardsBin, tablesBin].every((p) => fs.existsSync(p));
 

@@ -1,21 +1,12 @@
 // End-to-end smoke test of the built site (public/) in headless Chromium, over http:// and file://.
 // Usage: node tests/e2e/smoke.mjs [screenshot-dir]
-import fs from 'node:fs';
-import http from 'node:http';
 import path from 'node:path';
 import { launchBrowser, root } from '../../tools/lib.mjs';
+import { createServer } from '../../tools/serve.mjs';
 
 const pub = path.join(root, 'public');
 const shots = process.argv[2];
-const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.wasm': 'application/wasm', '.webp': 'image/webp' };
-const server = http.createServer((req, res) => {
-  let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
-  if (p.endsWith('/')) p += 'index.html';
-  const file = path.join(pub, p);
-  if (!file.startsWith(pub) || !fs.existsSync(file)) { res.writeHead(404).end(); return; }
-  res.writeHead(200, { 'content-type': types[path.extname(file)] || 'application/octet-stream' });
-  fs.createReadStream(file).pipe(res);
-});
+const server = createServer(pub);
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
 const port = server.address().port;
 
@@ -45,6 +36,8 @@ for (const [label, url] of [['http', `http://127.0.0.1:${port}/`], ['file', `fil
   // Test mode: accept the recommended card and let the page judge it, a few times.
   await page.click('#testModeBtn');
   await page.waitForFunction(() => !document.querySelector('#sessionBanner').hidden);
+  const opts = await page.$eval('#revealValue', (el) => el.options.length);
+  check(opts > 0, `reveal value list is filled after the field list changes (${opts} options)`);
   for (let i = 0; i < 12; i++) {
     const solved = await page.isVisible('#solvedBanner');
     if (solved) break;
@@ -60,6 +53,18 @@ for (const [label, url] of [['http', `http://127.0.0.1:${port}/`], ['file', `fil
   if (shots && label === 'http') await page.screenshot({ path: path.join(shots, 'test-mode.png'), fullPage: true });
   check(errors.length === 0, `no page errors${errors.length ? ': ' + errors.join(' | ') : ''}`);
   await page.close();
+}
+if (shots) {
+  // Phone-width layout.
+  const phone = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+  await phone.goto(`http://127.0.0.1:${port}/`);
+  await phone.waitForFunction(() => document.querySelector('#dataStats')?.textContent.includes('判定组'), null, { timeout: 30000 });
+  await phone.click('#testModeBtn');
+  await phone.waitForFunction(() => !document.querySelector('#proofLabel').hidden, null, { timeout: 30000 });
+  const overflow = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  check(overflow <= 1, `no horizontal page scroll at 390 px (overflow ${overflow}px)`);
+  await phone.screenshot({ path: path.join(shots, 'phone.png'), fullPage: true });
+  await phone.close();
 }
 await browser.close();
 server.close();

@@ -7,7 +7,7 @@ import test from 'node:test';
 
 const root = path.resolve(import.meta.dirname, '..', '..');
 const wasmDir = path.join(root, 'build', 'wasm');
-const cardsBin = path.join(root, 'build', 'data', 'cards.bin');
+const cardsBin = path.join(root, 'data', 'generated', 'cards.bin');
 const ready = fs.existsSync(path.join(wasmDir, 'decoder.js')) && fs.existsSync(cardsBin);
 
 test('wasm engine loads cards.bin with the native data hash', { skip: !ready && 'run npm run data:legacy && npm run build first' }, async () => {

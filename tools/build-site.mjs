@@ -1,7 +1,7 @@
 // Assemble public/ — the folder uploaded to Cloudflare (dashboard upload, no CLI) and zipped for
 // offline use. Only generated, whitelisted files are written, so stray local folders never leak.
 //
-// Inputs: build/wasm (npm run build:wasm), build/data (npm run data:build), tables/tables.bin,
+// Inputs: build/wasm (npm run build:wasm), data/generated (npm run data:build), tables/tables.bin,
 //         web/ (page source), optional build/sheets (npm run images), optional legacy cards-data.js.
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -36,9 +36,9 @@ async function bundle(entry) {
   return out.outputFiles[0].text;
 }
 
-for (const need of [['build', 'wasm', 'decoder_bg.wasm'], ['build', 'data', 'cards.bin'], ['build', 'data', 'names.json']]) {
+for (const need of [['build', 'wasm', 'decoder_bg.wasm'], ['data', 'generated', 'cards.bin'], ['data', 'generated', 'names.json']]) {
   if (!exists(...need)) {
-    console.error(`missing ${need.join('/')}: run npm run data:build and npm run build:wasm first`);
+    console.error(`missing ${need.join('/')}: run npm run data:build (or use the committed data/generated) and npm run build:wasm first`);
     process.exit(1);
   }
 }
@@ -55,18 +55,18 @@ const files = {
 };
 
 // Data (classic scripts, identical in both modes).
-const names = JSON.parse(read('build', 'data', 'names.json'));
+const names = JSON.parse(read('data', 'generated', 'names.json'));
 const tables = exists('tables', 'tables.bin') ? read('tables', 'tables.bin') : Buffer.alloc(0);
 if (!tables.length) console.warn('tables/tables.bin missing: the page falls back to the legacy continuation formula');
 const dataScripts = [
-  emitHashed('data', 'cards', '.js', assign('CARDS_BIN_B64', jsString(read('build', 'data', 'cards.bin').toString('base64')))),
+  emitHashed('data', 'cards', '.js', assign('CARDS_BIN_B64', jsString(read('data', 'generated', 'cards.bin').toString('base64')))),
   emitHashed('data', 'tables', '.js', assign('TABLES_BIN_B64', jsString(tables.toString('base64')))),
   emitHashed('data', 'names', '.js', assign('CARD_NAMES', JSON.stringify(names.display))),
 ];
 files.aliases = emitHashed('data', 'aliases', '.js', assign('CARD_ALIASES', JSON.stringify(names.aliases)));
 
 // Old saves (v4) refer to cards by their index in the legacy cards-data.js.
-const legacyPath = ['legacy/cards-data.js', 'dist/cards-data.js'].find((p) => exists(p));
+const legacyPath = ['legacy/cards-data.js'].find((p) => exists(p));
 if (legacyPath) {
   const text = read(legacyPath).toString('utf8').trim().replace(/^window\.CARD_DATA=/, '').replace(/;$/, '');
   const legacy = JSON.parse(text).cards.map((c) => c.ids[0]);

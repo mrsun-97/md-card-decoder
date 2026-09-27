@@ -1,6 +1,6 @@
-dist/card-images/
-dist/card-images-high/
-dist/card-images-zh/
+legacy/card-images/
+legacy/card-images-high/
+legacy/card-images-zh/
 *.log
 *.zip
 .DS_Store

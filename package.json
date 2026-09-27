@@ -7,19 +7,24 @@
   "scripts": {
     "doctor": "node tools/doctor.mjs",
     "data:fetch": "node tools/data-fetch.mjs",
-    "data:build": "cargo run --release -q -p decoder-cli -- data build data/raw build/data && cp build/data/summary.json data/summary.json",
+    "data:build": "cargo run --release -q -p decoder-cli -- data build data/raw data/generated",
     "data:update": "node tools/data-fetch.mjs --update && npm run -s data:build",
-    "data:check": "cargo run --release -q -p decoder-cli -- data compare-legacy dist/cards-data.js build/data/cards.bin && cargo run --release -q -p decoder-cli -- check-rules dist/cards-data.js build/data/cards.bin",
+    "data:check": "cargo run --release -q -p decoder-cli -- data compare-legacy legacy/cards-data.js data/generated/cards.bin && cargo run --release -q -p decoder-cli -- check-rules legacy/cards-data.js data/generated/cards.bin",
+    "fit": "cargo run --release -q -p decoder-cli -- fit-cont data/generated/cards.bin out=tables/cont.bin && cargo run --release -q -p decoder-cli -- fit-leaf data/generated/cards.bin out=tables/leaf.bin && cargo run --release -q -p decoder-cli -- pack-tables tables",
+    "images": "node tools/images.mjs",
     "build:wasm": "node tools/build-wasm.mjs",
     "build:site": "node tools/build-site.mjs",
     "build": "node tools/build-wasm.mjs && node tools/build-site.mjs",
-    "bench": "cargo run --release -q -p decoder-cli -- bench build/data/cards.bin",
-    "bench:wasm": "node tools/bench-wasm.mjs",
-    "spike:browser": "node tools/spike-browser.mjs",
-    "test": "cargo test --workspace && node --test tests/node/"
+    "dev": "node tools/serve.mjs",
+    "pack": "npm run -s build && node tools/pack.mjs",
+    "test": "cargo test --workspace && node --test tests/node/",
+    "test:e2e": "node tests/e2e/smoke.mjs",
+    "bench": "cargo run --release -q -p decoder-cli -- bench data/generated/cards.bin",
+    "bench:wasm": "node tools/bench-wasm.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",
-    "playwright": "^1.63.0"
+    "playwright": "^1.63.0",
+    "sharp": "^0.35.4"
   }
 }
