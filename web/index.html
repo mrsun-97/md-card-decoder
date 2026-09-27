@@ -79,7 +79,7 @@
       <p class="pool-caveat" id="poolCaveat"></p>
       <div class="trail-wrap"><div class="subheading"><h3>活动轨迹</h3><span id="trailCount"></span></div><div id="trail" class="trail"></div></div>
       <div class="candidate-table-wrap"><div class="subheading"><h3>候选卡</h3><span id="candidateMass"></span></div>
-        <div class="candidate-tools"><input id="candidateSearch" type="search" placeholder="搜索候选卡名" aria-label="搜索候选卡名"><select id="candidateFilterField" aria-label="筛选字段"><option value="">全部字段</option><option value="0">边框</option><option value="1">属性</option><option value="2">种族</option><option value="3">等级／阶级／连接</option><option value="4">攻击力</option><option value="5">守备力</option></select><select id="candidateFilterValue" aria-label="筛选值" disabled><option value="">全部值</option></select></div>
+        <div class="candidate-tools"><input id="candidateSearch" type="search" placeholder="搜索候选卡名" aria-label="搜索候选卡名"><select id="candidateFilterField" aria-label="筛选字段"><option value="">全部字段</option><option value="0">边框</option><option value="1">属性</option><option value="3">等级／阶级／连接</option><option value="2">种族</option><option value="4">攻击力</option><option value="5">守备力</option></select><select id="candidateFilterValue" aria-label="筛选值" disabled><option value="">全部值</option></select></div>
         <div class="candidate-table" id="candidateTable"></div>
       </div>
       <footer class="data-note"><span id="dataStats">正在载入卡库…</span><button id="resetEventBtn" type="button">重置整个活动</button></footer>
@@ -120,7 +120,7 @@
   <dialog id="feedbackDialog" class="modal feedback-modal">
     <form method="dialog" class="modal-card" id="feedbackForm">
       <header><div><p class="eyebrow">真实活动录入</p><h2>本次挑战判定</h2></div><button class="icon-btn" type="button" data-close aria-label="关闭">×</button></header>
-      <p class="modal-note">勾选游戏中显示为相符（黄色）的项目。边框或等级相符时，再选择游戏揭示的完整值。</p>
+      <div class="feedback-head"><p class="modal-note">勾选游戏中显示为相符（黄色）的项目。边框或等级相符时，再选择游戏揭示的完整值。</p><button id="feedbackAllBtn" class="quiet-btn" type="button">全选</button></div>
       <div class="feedback-grid" id="feedbackGrid" aria-label="挑战反馈"></div>
       <div class="special-reveals" id="specialReveals"><label id="frameRevealWrap" hidden><span>游戏揭示的完整边框</span><select id="frameReveal"></select></label><label id="levelRevealWrap" hidden><span>游戏揭示的等级／阶级／连接</span><select id="levelReveal"></select></label></div>
       <p class="form-help" id="feedbackCheck"></p>

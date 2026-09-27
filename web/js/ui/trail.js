@@ -1,7 +1,7 @@
 // 活动轨迹 in the in-game 「记录」 style (PLAN.md §6.1): puzzle tabs, a sticky summary column with
 // the target and its known fields, then one column per step — a lightbulb for reveals (initial or
 // hint), the guessed card for challenges — with six rows each; matched rows are yellow.
-import { FIELDS, escapeHtml, formatValue, frameParts } from '../labels.js';
+import { FIELDS, ORDER, escapeHtml, formatValue, frameParts } from '../labels.js';
 import { thumbHtml } from './images.js';
 
 const ROW_ICONS = ['▣', '◉', '♞', '★', '⚔', '⛨'];
@@ -13,7 +13,8 @@ function valueText(f, raw) {
 }
 
 function rows(values, matchedMask, shownMask) {
-  return FIELDS.map((field, f) => {
+  return ORDER.map((f) => {
+    const field = FIELDS[f];
     const on = shownMask & field.bit;
     const cls = !on ? 'row empty' : matchedMask & field.bit ? 'row hit' : 'row miss';
     return `<div class="${cls}"><i>${ROW_ICONS[f]}</i><b>${on ? valueText(f, values[f]) : ''}</b></div>`;

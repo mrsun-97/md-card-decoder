@@ -260,4 +260,4 @@ npm run images        # 下载新卡的缩略图并重新打包（已有的缩�
 
 ### 1.x
 
-[旧版工具](https://github.com/gumiajer21/card-decoder)（原生 JavaScript from Gumiajer），保存在 `legacy/`。
+[旧版工具](https://github.com/gumiajer21/card-decoder)（原生 JavaScript, 来自b站 Gumiajer）保存在 `legacy/`.

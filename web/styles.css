@@ -570,3 +570,5 @@ body:has(.solved-banner:not([hidden])) { padding-bottom: 110px; }
 .alt-head strong { font-size: .86rem; }
 .alt-head span { color: var(--muted); font-size: .72rem; line-height: 1.5; }
 .alt-row em small { margin-left: 2px; color: var(--muted); font-size: .7rem; font-weight: 600; }
+.feedback-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.feedback-head .quiet-btn { flex: 0 0 auto; }

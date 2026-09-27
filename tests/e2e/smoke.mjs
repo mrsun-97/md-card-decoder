@@ -88,7 +88,12 @@ for (const [label, url] of [['http', `http://127.0.0.1:${port}/`], ['file', `fil
   await page.waitForSelector('#searchResults button[data-select]');
   await page.click('#searchResults button[data-select]');
   await page.click('#challengeBtn');
-  for (const bit of [1, 2, 8, 16, 32]) await page.click(`.feedback-toggle[data-bit="${bit}"]`); // all but 种族
+  const dialogOrder = await page.$$eval('.feedback-toggle span', (els) => els.map((e) => e.textContent.slice(0, 2)).join(''));
+  check(dialogOrder === '卡片属性等级种族攻击守备', `judgement dialog uses the game's field order (${dialogOrder})`);
+  await page.click('#feedbackAllBtn'); // 全选
+  const allOn = await page.$$eval('.feedback-toggle.is-on', (els) => els.length);
+  check(allOn === 6 && (await page.textContent('#feedbackAllBtn')) === '全不选', `全选 ticks all six fields (${allOn})`);
+  await page.click('.feedback-toggle[data-bit="4"]'); // untick 种族
   await page.click('#confirmFeedbackBtn');
   // Then set the counts to the game's current state.
   await setNum('#hintStock', 3);
@@ -97,6 +102,10 @@ for (const [label, url] of [['http', `http://127.0.0.1:${port}/`], ['file', `fil
   const cards = (await page.textContent('#candidateCount')).trim();
   check(cards === '41', `re-entered 记录 gives the game's 41/9058 (${cards} cards, ${await page.textContent('#candidateMass')})`);
   check((await page.inputValue('#puzzleInput')) === '4', 'puzzle number set to 4');
+  const gridOrder = await page.$$eval('#fieldGrid .field-content > span', (els) => els.map((e) => e.textContent.slice(0, 2)).join(''));
+  check(gridOrder === '卡片属性等级种族攻击守备', `six-field panel uses the game's order (${gridOrder})`);
+  const trailRows = await page.$$eval('.trail-step.challenge .trail-rows .row b', (els) => els.map((e) => e.textContent).join('|'));
+  check(trailRows.startsWith('效果|暗|1|恶魔族'), `活动轨迹 rows use the game's order (${trailRows})`);
   const planned = await page.textContent('#plannedStock');
   check(planned.includes('提示 8') && planned.includes('挑战 20'), `planned inventory = now + 5 more grant days (${planned})`);
   const matched = await page.textContent('#matchedSummary');

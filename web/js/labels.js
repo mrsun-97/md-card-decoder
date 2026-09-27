@@ -9,6 +9,9 @@ export const FIELDS = [
   { key: 'def', bit: 32, label: '守备力', short: '守备' },
 ];
 
+/** Display order, as in the game: 边框, 属性, 等级, 种族, 攻击, 守备 (values are field indices). */
+export const ORDER = [0, 1, 3, 2, 4, 5];
+
 const FRAME = { 1: '通常', 2: '效果', 4: '融合', 8: '同步', 16: '超量', 32: '连接', 64: '仪式', 128: '灵摆' };
 const ATTRIBUTE = { 1: '地', 2: '水', 4: '火', 8: '风', 16: '光', 32: '暗', 64: '神' };
 const RACE = {

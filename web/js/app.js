@@ -1,7 +1,7 @@
 // Page controller: state changes, rendering and the engine calls behind them.
 import { CardData } from './data.js';
 import { Engines, fromBase64 } from './engine.js';
-import { FIELDS, escapeHtml, formatValue, frameGradient, pct, valueSortKey } from './labels.js';
+import { FIELDS, ORDER, escapeHtml, formatValue, frameGradient, pct, valueSortKey } from './labels.js';
 import * as S from './state.js';
 import { renderTrail } from './ui/trail.js';
 import { thumbHtml, openViewer } from './ui/images.js';
@@ -275,7 +275,7 @@ function renderSession() {
   $('#sessionModeLabel').textContent = session.mode === 'test' ? '测试模式 · 目标卡公开' : visible ? '小游戏模式 · 答案已揭晓' : '小游戏模式 · 目标卡隐藏';
   $('#sessionTargetName').textContent = visible ? data.name(target) : '？？？';
   $('#sessionTargetStats').textContent = visible
-    ? FIELDS.map((_, f) => formatValue(f, data.value(target, f))).join(' · ')
+    ? ORDER.map((f) => formatValue(f, data.value(target, f))).join(' · ')
     : `根据反馈猜出目标卡；当前剩余 ${belief.ok ? belief.count : 0} 个判定组。`;
   $('#sessionTargetThumb').innerHTML = visible ? thumbHtml(data, target) : thumbHtml(data, null);
   $('#revealTargetBtn').hidden = session.mode !== 'game' || visible;
@@ -284,7 +284,8 @@ function renderSession() {
 function renderFields() {
   const known = belief.ok ? belief.known : [null, null, null, null, null, null];
   const matched = belief.ok ? belief.matched : 0;
-  $('#fieldGrid').innerHTML = FIELDS.map((f, i) => {
+  $('#fieldGrid').innerHTML = ORDER.map((i) => {
+    const f = FIELDS[i];
     const v = known[i];
     const isMatched = Boolean(matched & f.bit);
     const glyph = i === 0 && v != null
@@ -334,7 +335,7 @@ function renderPoints() {
 function renderRevealControls() {
   const s = active();
   const known = belief.ok ? belief.known : [];
-  const unknown = FIELDS.map((_, i) => i).filter((i) => known[i] == null);
+  const unknown = ORDER.filter((i) => known[i] == null);
   const sel = $('#revealField');
   const prev = sel.value;
   sel.innerHTML = unknown.map((i) => `<option value="${i}">${FIELDS[i].label}</option>`).join('');
@@ -377,7 +378,7 @@ function renderSelected() {
   box.hidden = false;
   $('#selectedThumb').innerHTML = thumbHtml(data, selected);
   $('#selectedCardName').textContent = data.name(selected);
-  $('#selectedCardFacts').innerHTML = FIELDS.map((f, i) => `<span><em>${f.short}</em>${escapeHtml(formatValue(i, data.value(selected, i)))}</span>`).join('');
+  $('#selectedCardFacts').innerHTML = ORDER.map((i) => `<span><em>${FIELDS[i].short}</em>${escapeHtml(formatValue(i, data.value(selected, i)))}</span>`).join('');
   const guessed = puzzle().events.some((e) => e.t === 'challenge' && data.gidOf(e.pc) === selected);
   const notes = [];
   if (guessed) notes.push('本题已挑战过这张卡：重复判定不消耗次数，也不会得到新信息。');
@@ -405,8 +406,8 @@ function renderCandidates() {
   if (ff !== '' && fv !== '') list = list.filter((g) => String(data.value(g, Number(ff))) === fv);
   list = [...list].sort((a, b) => data.weight(b, pool) - data.weight(a, pool) || data.name(a).localeCompare(data.name(b), 'zh-CN'));
   const shown = list.slice(0, candidateLimit);
-  box.innerHTML = `<div class="cand-row cand-head"><span>卡名</span>${FIELDS.map((f) => `<span>${f.short}</span>`).join('')}<span>概率</span></div>`
-    + shown.map((g) => `<button type="button" class="cand-row" data-select="${g}"><span class="cand-name">${escapeHtml(data.name(g))}</span>${FIELDS.map((_, f) => `<span>${escapeHtml(formatValue(f, data.value(g, f)))}</span>`).join('')}<span>${pct(data.weight(g, pool) / mass)}</span></button>`).join('')
+  box.innerHTML = `<div class="cand-row cand-head"><span>卡名</span>${ORDER.map((i) => `<span>${FIELDS[i].short}</span>`).join('')}<span>概率</span></div>`
+    + shown.map((g) => `<button type="button" class="cand-row" data-select="${g}"><span class="cand-name">${escapeHtml(data.name(g))}</span>${ORDER.map((f) => `<span>${escapeHtml(formatValue(f, data.value(g, f)))}</span>`).join('')}<span>${pct(data.weight(g, pool) / mass)}</span></button>`).join('')
     + (list.length > shown.length ? `<button type="button" class="quiet-btn more-btn" id="moreCandidates">显示更多（已显示 ${shown.length} / ${list.length}）</button>` : `<p class="table-foot">共 ${list.length} 个判定组</p>`);
 }
 
@@ -513,7 +514,7 @@ function renderRecommendation(r) {
     title.disabled = false;
     delete title.dataset.select;
     title.dataset.hint = '1';
-    const unknownFields = FIELDS.filter((_, i) => belief.known[i] == null);
+    const unknownFields = ORDER.filter((i) => belief.known[i] == null).map((i) => FIELDS[i]);
     let certain = `提示会从 ${unknownFields.length} 个未知字段中随机揭示一个。`;
     if (unknownFields.length === 1) {
       const fi = FIELDS.indexOf(unknownFields[0]);
@@ -586,7 +587,7 @@ function openFeedback() {
   if (selected == null) return;
   feedbackMask = 0;
   const g = selected;
-  $('#feedbackGrid').innerHTML = FIELDS.map((f, i) => `<button type="button" class="feedback-toggle" data-bit="${f.bit}"><span>${f.label}</span><strong>${escapeHtml(formatValue(i, data.value(g, i)))}</strong></button>`).join('');
+  $('#feedbackGrid').innerHTML = ORDER.map((i) => `<button type="button" class="feedback-toggle" data-bit="${FIELDS[i].bit}"><span>${FIELDS[i].label}</span><strong>${escapeHtml(formatValue(i, data.value(g, i)))}</strong></button>`).join('');
   // Frame options: frames of candidates that the guess's frame would match.
   const cands = belief.ok ? belief.candidates : [];
   const gf = data.value(g, 0);
@@ -611,6 +612,7 @@ function feedbackValue() {
 
 function updateFeedbackForm() {
   $$('.feedback-toggle').forEach((b) => b.classList.toggle('is-on', Boolean(feedbackMask & Number(b.dataset.bit))));
+  $('#feedbackAllBtn').textContent = feedbackMask === 63 ? '全不选' : '全选';
   $('#frameRevealWrap').hidden = !(feedbackMask & 1);
   $('#levelRevealWrap').hidden = !(feedbackMask & 8);
   const fb = feedbackValue();
@@ -778,7 +780,7 @@ function bind() {
       const box = $('#searchResults');
       box.hidden = !q.trim();
       box.innerHTML = hits.length
-        ? hits.map((g) => `<button type="button" data-select="${g}"><strong>${escapeHtml(data.name(g))}</strong><span>${FIELDS.map((_, f) => escapeHtml(formatValue(f, data.value(g, f)))).join(' · ')}</span></button>`).join('')
+        ? hits.map((g) => `<button type="button" data-select="${g}"><strong>${escapeHtml(data.name(g))}</strong><span>${ORDER.map((f) => escapeHtml(formatValue(f, data.value(g, f)))).join(' · ')}</span></button>`).join('')
         : '<div class="empty-inline">没有找到</div>';
     }, 120);
   });
@@ -804,6 +806,10 @@ function bind() {
     const b = e.target.closest('.feedback-toggle');
     if (!b) return;
     feedbackMask ^= Number(b.dataset.bit);
+    updateFeedbackForm();
+  });
+  $('#feedbackAllBtn').addEventListener('click', () => {
+    feedbackMask = feedbackMask === 63 ? 0 : 63;
     updateFeedbackForm();
   });
   $('#frameReveal').addEventListener('change', updateFeedbackForm);
